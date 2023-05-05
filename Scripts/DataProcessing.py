@@ -103,11 +103,11 @@ state_dict = {
 
 usa = ['USA','US','AMERICA','STATES']
 
-file_list=["/content/Chewy_twitter_data.csv"] #"Petco_twitter_data.csv", "Chewy.com_twitter_data.csv"
+file_list=["Petsmart_Twitter_Data.csv", "Petco_twitter_data.csv", "Chewy.com_twitter_data.csv"]
 for filename in file_list:
     df = pd.read_csv(filename)
     df["Tweet"] = df["Tweet"].apply(lambda tweet: remove_username_and_links(tweet))
-    df["Date"] = df["Date"].apply(lambda date: convert_to_datetime(date))
+    #df["Date"] = df["Date"].apply(lambda date: convert_to_datetime(date))
     df["Location"] = df["Location"].apply(lambda location: extract_state(location))
     df["Total Tweets Count"] = df["Retweet Count"] + 1
     df.drop(df[df["Tweet"] == ""].index, inplace=True)
