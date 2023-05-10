@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 27 14:17:27 2023
 
-@author: kalya
-"""
+# Twitter Data Scraping Using Tweepy
 
+# Import necessary libraries
 import tweepy
 import configparser
 import pandas as pd
@@ -12,31 +10,37 @@ import datetime
 import os.path
 import json
 
-
-# Read config
+# Read configuration file
 config = configparser.ConfigParser()
 config.read('Config.ini')
 
+# Retrieve API keys and access tokens from the configuration file
 api_key = config['twitter']['api_key']
 api_key_secret = config['twitter']['api_key_secret']
 access_token = config['twitter']['access_token']
 access_token_secret = config['twitter']['access_token_secret']
 
-# Authentication
+# Authenticate using Tweepy
 auth = tweepy.OAuthHandler(api_key, api_key_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
+# Define a list of keywords to search for
 keywords = ['Petsmart']  #, 'Petco', 'Chewy.com'
-columns = ['Id', 'Date', 'Tweet', 'Location', 'Retweet Count', 'Favorite Count']
-logs = [] # Initialize an empty list for logs
 
+# Define the columns to include in the output CSV file
+columns = ['Id', 'Date', 'Tweet', 'Location', 'Retweet Count', 'Favorite Count']
+
+# Initialize an empty list for logs
+logs = []
+
+# For each keyword, search for tweets and save the results to a CSV file
 for keyword in keywords:
     filename = '{}_twitter_data.csv'.format(keyword)
 
-    # Check if the file already exists
+    # Check if the CSV file already exists
     if os.path.isfile(filename):
-        # Read existing data and columns
+        # If the file exists, read it into a DataFrame
         df = pd.read_csv(filename)
 
         # Get the existing columns and their order
@@ -53,13 +57,14 @@ for keyword in keywords:
         df = df[columns]
 
     else:
-        # Create a new DataFrame with the required columns
+        # If the file doesn't exist, create a new DataFrame with the required columns
         df = pd.DataFrame(columns=columns)
 
-    # Search for tweets
+    # Search for tweets containing the keyword using Tweepy
     data = []
     for tweet in tweepy.Cursor(api.search_tweets, q=keyword, tweet_mode='extended').items(50):
         if not hasattr(tweet, 'retweeted_status'):
+            # Extract relevant data from the tweet object
             new_data = [tweet.id, tweet.created_at, tweet.full_text, tweet.user.location, tweet.retweet_count, tweet.favorite_count]
             data.append(new_data)
 
@@ -70,12 +75,12 @@ for keyword in keywords:
     # Save data to CSV file
     df.to_csv(filename, index=False)
 
-    # Log information
+    # Log information about the keyword and the number of rows in the CSV file
     num_rows = len(df.index)
     runtime = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
-    logs.append({'keyword': keyword, 'num_rows': num_rows, 'runtime': runtime}) # Append a dictionary with keyword information to logs
+    logs.append({'keyword': keyword, 'num_rows': num_rows, 'runtime': runtime})
 
-# Write logs to JSON file
+# Write logs to a JSON file with a timestamp in the filename
 with open('twitter_data_logs_{}.json'.format(datetime.now().strftime('%Y%m%d%H%M%S')), 'w') as f:
     json.dump(logs, f)
     f.write('\n')
